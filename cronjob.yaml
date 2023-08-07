@@ -1,0 +1,26 @@
+# cronjob.yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: mongo-backup
+spec:
+  schedule: "*/15 * * * *"  
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongo-backup
+              image: mongo:latest
+              command: ["/bin/sh"]
+              args:
+               - -c
+                - mongodump --host mongo-0.mongo:27017 --username admin --password password --authenticationDatabase admin --out /backup
+          restartPolicy: OnFailure
+          volumes:
+            - name: backup-volume
+              persistentVolumeClaim:
+                claimName: backup-pvc
+          securityContext:
+            runAsUser: 0
+      backoffLimit: 3  # Number of retries before considering the job as failed

@@ -1,0 +1,48 @@
+# mongo.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  replicas: 3
+  serviceName: "mongo"
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/sh", "-c", "mongo --eval 'rs.initiate({_id: \"rs0\", members: [{_id: 0, host: \"mongo-0.mongo:27017\"}]}); db.getSiblingDB(\"admin\").createUser({user: \"admin\", pwd: \"password\", roles: [\"root\"]})'"]
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: username
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secret
+                  key: password
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+spec:
+  selector:
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017
