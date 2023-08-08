@@ -9,4 +9,4 @@ spec:
   accessModes:
     - ReadWriteOnce
   hostPath:
-    path: /app/data/ # Replace with the actual host path
+    path: /data/db # Replace with the actual host path
